@@ -62,6 +62,7 @@
     "twilio": "latest",
     "@paypal/react-paypal-js": "latest",
     "@prisma/client": "latest"
+    "twilio-video": "^2.27.0",
   },
   "devDependencies": {
     "@types/node": "^22",
