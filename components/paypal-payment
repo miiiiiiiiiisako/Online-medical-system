@@ -1,0 +1,93 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { PayPalButtons } from "@paypal/react-paypal-js"
+import { Loader2 } from 'lucide-react'
+
+interface PayPalPaymentProps {
+  amount: number
+  description: string
+  orderId: string
+  onSuccess: (details: any) => void
+  onCancel: () => void
+  onError?: (error: any) => void
+}
+
+export function PayPalPayment({
+  amount,
+  description,
+  orderId,
+  onSuccess,
+  onCancel,
+  onError,
+}: PayPalPaymentProps) {
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>予約確定のための支払い</CardTitle>
+        <CardDescription>予約ID: {orderId.replace("appointment-", "")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="border-b pb-4">
+          <div className="flex justify-between mb-2">
+            <span>診察料</span>
+            <span>¥{amount.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between font-bold">
+            <span>合計</span>
+            <span>¥{amount.toLocaleString()}</span>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="font-medium">PayPalで支払う</h3>
+          {isProcessing ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <PayPalButtons
+              style={{ layout: "vertical" }}
+              createOrder={(data, actions) => {
+                return actions.order.create({
+                  purchase_units: [
+                    {
+                      description: description,
+                      amount: {
+                        currency_code: "JPY",
+                        value: amount.toString(),
+                      },
+                      reference_id: orderId,
+                    },
+                  ],
+                })
+              }}
+              onApprove={(data, actions) => {
+                setIsProcessing(true)
+                return actions.order.capture().then((details) => {
+                  onSuccess(details)
+                  setIsProcessing(false)
+                })
+              }}
+              onCancel={() => {
+                onCancel()
+              }}
+              onError={(err) => {
+                if (onError) onError(err)
+              }}
+            />
+          )}
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button variant="outline" onClick={onCancel} disabled={isProcessing} className="w-full">
+          キャンセル
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
